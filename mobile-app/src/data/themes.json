@@ -1,0 +1,17 @@
+[
+  {
+    "id": "paz",
+    "nome": "Paz",
+    "versiculos": [
+      { "livro": "Filipenses", "capitulo": 4, "versiculo": 13 },
+      { "livro": "Salmos", "capitulo": 23, "versiculo": 1 }
+    ]
+  },
+  {
+    "id": "amor",
+    "nome": "Amor",
+    "versiculos": [
+      { "livro": "João", "capitulo": 3, "versiculo": 16 }
+    ]
+  }
+]

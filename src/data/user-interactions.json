@@ -1,0 +1,19 @@
+{
+  "favorites": [
+    {
+      "book": "João",
+      "chapter": 3,
+      "verse": 16,
+      "addedAt": "2026-06-13T02:56:21.110Z"
+    }
+  ],
+  "notes": [
+    {
+      "book": "Salmos",
+      "chapter": 23,
+      "verse": 1,
+      "comment": "Este versículo me traz paz em momentos de ansiedade e decisões difíceis.",
+      "createdAt": "2026-06-13T02:56:21.112Z"
+    }
+  ]
+}

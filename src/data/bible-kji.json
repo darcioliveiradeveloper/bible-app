@@ -1,0 +1,6 @@
+[
+  { "id": 1, "livro": "Gênesis", "capitulo": 1, "versiculo": 1, "texto": "No princípio criou Deus os céus e a terra." },
+  { "id": 2, "livro": "Gênesis", "capitulo": 1, "versiculo": 2, "texto": "A terra estava informe e vazia; as trevas cobriam o abismo, e o Espírito de Deus pairava sobre as águas." },
+  { "id": 3, "livro": "Gênesis", "capitulo": 1, "versiculo": 3, "texto": "Declarou Deus: \"Haja luz!\" E surgiu a luz." },
+  { "id": 4, "livro": "João", "capitulo": 3, "versiculo": 16, "texto": "Porque Deus amou o mundo de tal maneira..." }
+]
