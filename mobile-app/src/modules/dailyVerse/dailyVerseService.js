@@ -1,36 +1,52 @@
-// 1. Mapeamos os arquivos JSON usando o require nativo do React Native
+// Mapeamento dos arquivos JSON reais
 const bibleVersions = {
-    ara: require('../../data/bible-ara.json'),
-    nvi: require('../../data/bible-nvi.json'),
-    kji: require('../../data/bible-kji.json'),
+    default: require('../../../assets/bibles/bible-default.json'), // KJV Nativa
+    ara: require('../../../assets/bibles/bible-ara.json'),
+    nvi: require('../../../assets/bibles/bible-nvi.json'),
 };
 
 /**
- * Retorna o versículo do dia baseado na data atual e na versão escolhida.
- * @param {string} version - 'ara', 'nvi' ou 'kji'
+ * Retorna o versículo do dia com lógica de fallback inteligente.
  */
-function getDailyVerse(version = 'ara') {
+function getDailyVerse(version = 'default') {
     try {
-        // 2. Pegamos os versículos direto da memória (sem usar 'fs' ou 'path')
-        const verses = bibleVersions[version] || bibleVersions['ara'];
+        // Tenta pegar a versão solicitada
+        let bibleData = bibleVersions[version.toLowerCase()] || bibleVersions['default'];
 
-        if (!verses || verses.length === 0) return null;
+        // FALLBACK: Se o arquivo da versão estiver vazio ou sem livros, usa a 'default' (KJV)
+        if (!bibleData || !bibleData.books || bibleData.books.length === 0) {
+            bibleData = bibleVersions['default'];
+        }
 
-        // 3. Lógica matemática para escolher o versículo baseado no dia do ano
         const today = new Date();
         const startOfYear = new Date(today.getFullYear(), 0, 0);
         const diff = today - startOfYear;
         const oneDay = 1000 * 60 * 60 * 24;
         const dayOfYear = Math.floor(diff / oneDay);
 
-        // O operador % (resto da divisão) garante que o índice sempre caiba no tamanho da nossa lista
-        const verseIndex = dayOfYear % verses.length;
+        const bookIndex = dayOfYear % bibleData.books.length;
+        const selectedBook = bibleData.books[bookIndex];
 
-        return verses[verseIndex];
+        const chapterIndex = dayOfYear % selectedBook.chapters.length;
+        const selectedChapter = selectedBook.chapters[chapterIndex];
+
+        const verseIndex = dayOfYear % selectedChapter.verses.length;
+        const selectedVerse = selectedChapter.verses[verseIndex];
+
+        return {
+            livro: selectedBook.name,
+            capitulo: selectedChapter.number,
+            versiculo: selectedVerse.number,
+            texto: selectedVerse.text
+        };
+
     } catch (error) {
-        console.error(`Erro ao carregar o versículo do dia para a versão ${version}:`, error.message);
+        console.error(`Erro no versículo do dia:`, error.message);
         return null;
     }
 }
 
-module.exports = { getDailyVerse };
+module.exports = { 
+    getDailyVerse,
+    getDailyVerseFromApi: getDailyVerse 
+};

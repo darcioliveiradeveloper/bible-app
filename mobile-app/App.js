@@ -1,389 +1,198 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, ScrollView, SafeAreaView, TouchableOpacity, ActivityIndicator, BackHandler } from 'react-native';
+import { StyleSheet, View, Text, TouchableOpacity, ScrollView, SafeAreaView, StatusBar, Platform } from 'react-native';
 
-// Importando a lógica modular
 import BookSelector from './src/modules/reading/BookSelector';
 import ChapterSelector from './src/modules/reading/ChapterSelector';
 import ReadingScreen from './src/modules/reading/ReadingScreen';
-import { loadProgress, saveProgress } from './src/modules/reading/progressService';
+import ConfigScreen from './src/modules/reading/ConfigScreen';
+
+import { getDailyVerse } from './src/modules/dailyVerse/dailyVerseService';
+import { loadProgress } from './src/modules/reading/progressService';
+import { getActiveVersion } from './src/modules/reading/offlineService';
 
 export default function App() {
+  const [currentScreen, setCurrentScreen] = useState('HOME');
+  const [selectedTestament, setSelectedTestament] = useState(null);
+  const [selectedBook, setSelectedBook] = useState(null);
+  const [selectedChapter, setSelectedChapter] = useState(null);
+
+  const [xp, setXp] = useState(0);
+  const [streak, setStreak] = useState(1);
   const [dailyVerse, setDailyVerse] = useState(null);
-  const [userXp, setUserXp] = useState(0);
-  const [streakDays, setStreakDays] = useState(1);
-  const [isLoadingProgress, setIsLoadingProgress] = useState(true);
+  const [activeVersion, setActiveVersion] = useState('KJV');
 
-  // ESTADOS DE NAVEGAÇÃO
-  const [currentScreen, setCurrentScreen] = useState('home'); 
-  const [selectedTestament, setSelectedTestament] = useState('antigo');
-  const [selectedBook, setSelectedBook] = useState('');
-  const [selectedChapter, setSelectedChapter] = useState(1);
-
-  // ESTADOS PARA DOWNLOAD OFFLINE
-  const [downloadedVersions, setDownloadedVersions] = useState({ ara: false, nvi: false, kji: false });
-  const [downloadProgress, setDownloadProgress] = useState(0);
-  const [isDownloading, setIsDownloading] = useState(false);
-
-
-  // 🎮 CONTROLE CENTRAL DO BOTÃO VOLTAR NATIVO DO CELULAR
   useEffect(() => {
-    const backAction = () => {
-      if (currentScreen === 'reading') {
-        setCurrentScreen('chapters');
-        return true; 
-      }
-      if (currentScreen === 'chapters') {
-        setCurrentScreen('books');
-        return true;
-      }
-      if (currentScreen === 'books') {
-        setCurrentScreen('home');
-        return true;
-      }
-      return false; // Permite fechar o app se estiver na Home
-    };
-
-    const backHandler = BackHandler.addEventListener(
-      'hardwareBackPress',
-      backAction
-    );
-
-    return () => backHandler.remove();
-  }, [currentScreen]);
-
-
-  // Efeito para carregar os dados assim que o aplicativo abre
-  useEffect(() => {
-    const fetchHomeData = async () => {
-      try {
-        const { getDailyVerseFromApi } = require('./src/modules/dailyVerse/dailyVerseService');
-        const verse = await getDailyVerseFromApi();
-        if (verse) setDailyVerse(verse);
-      } catch (err) {
-        console.log("Erro ao processar versículo diário na Home:", err);
-      }
-
+    const initApp = async () => {
       try {
         const progress = await loadProgress();
-        setUserXp(progress.xp);
-        setStreakDays(progress.streak);
-      } catch (err) {
-        console.log("Erro ao carregar progresso do armazenamento:", err);
-      }
+        if (progress) {
+          setXp(progress.xp || 0);
+          setStreak(progress.streak || 1);
+        }
 
-      try {
-        const { getDownloadedVersions } = require('./src/modules/reading/offlineService');
-        const downloads = await getDownloadedVersions();
-        setDownloadedVersions(downloads);
-      } catch (err) {
-        console.log("Erro ao checar arquivos baixados:", err);
-      } finally {
-        setIsLoadingProgress(false);
+        const version = await getActiveVersion();
+        
+        if (version === 'default' || version === 'kjv') {
+          setActiveVersion('KJV');
+        } else {
+          setActiveVersion(version.toUpperCase());
+        }
+
+        const verse = getDailyVerse(version);
+        setDailyVerse(verse);
+      } catch (error) {
+        console.log("Erro ao inicializar dados na Home:", error);
       }
     };
 
-    fetchHomeData();
-  }, []);
-
-  const handleNavigateToTestament = (testamento) => {
-    setSelectedTestament(testamento);
-    setCurrentScreen('books');
-  };
-
-  const handleSelectBook = (bookName) => {
-    setSelectedBook(bookName);
-    setCurrentScreen('chapters');
-  };
-
-  const handleSelectChapter = (chapterNumber) => {
-    setSelectedChapter(chapterNumber);
-    setCurrentScreen('reading');
-  };
-
-  const handleDownload = async (versionCode) => {
-    setIsDownloading(true);
-    setDownloadProgress(0);
-    const { downloadBibleVersion, getDownloadedVersions } = require('./src/modules/reading/offlineService');
-    
-    const success = await downloadBibleVersion(versionCode, (progress) => {
-      setDownloadProgress(Math.round(progress * 100));
-    });
-
-    if (success) {
-      alert(`Versão ${versionCode.toUpperCase()} baixada com sucesso! Agora funciona totalmente offline. 🎉`);
-      const downloads = await getDownloadedVersions();
-      setDownloadedVersions(downloads);
-    } else {
-      alert('Falha ao baixar versão. Verifique sua conexão com a internet.');
+    if (currentScreen === 'HOME') {
+      initApp();
     }
-    setIsDownloading(false);
-  };
+  }, [currentScreen]);
 
-  const handleFinishReading = async () => {
-    const newXp = userXp + 10;
-    setUserXp(newXp);
-    await saveProgress(newXp, streakDays);
-    alert('Parabéns! Seu progresso foi salvo permanentemente no aparelho. 🎉');
-    setCurrentScreen('home');
+  const handleSelectTestament = (testament) => {
+    setSelectedTestament(testament);
+    setCurrentScreen('BOOKS');
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      {isLoadingProgress ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#4E3629" />
-          <Text style={styles.loadingText}>Iniciando o Bíblia Viva...</Text>
+      <StatusBar barStyle="dark-content" backgroundColor="#FAFAFA" translucent={true} />
+
+      {currentScreen === 'HOME' && (
+        <ScrollView contentContainerStyle={styles.scrollContent}>
+          <View style={styles.headerTitleContainer}>
+            <Text style={styles.mainTitle}>📖 Bíblia Viva</Text>
+          </View>
+
+          <View style={styles.progressCard}>
+            <Text style={styles.progressTitle}>🏆 Seu Progresso</Text>
+            <View style={styles.progressRow}>
+              <Text style={styles.progressItem}>✨ {xp} XP</Text>
+              <Text style={styles.progressItem}>🔥 {streak} Dias Seguidos</Text>
+            </View>
+          </View>
+
+          {dailyVerse ? (
+            <View style={styles.dailyVerseCard}>
+              <Text style={styles.dailyVerseTitle}>💡 Versículo do Dia</Text>
+              <Text style={styles.dailyVerseText}>"{dailyVerse.texto}"</Text>
+              <Text style={styles.dailyVerseReference}>
+                {dailyVerse.livro} {dailyVerse.capitulo}:{dailyVerse.versiculo} ({activeVersion})
+              </Text>
+            </View>
+          ) : (
+            <View style={styles.dailyVerseCard}>
+              <Text style={styles.dailyVerseTitle}>💡 Versículo do Dia</Text>
+              <Text style={styles.dailyVerseText}>Sincronizando mensagem de fé...</Text>
+            </View>
+          )}
+
+          <Text style={styles.sectionTitle}>Navegar por Testamentos</Text>
+          <View style={styles.testamentRow}>
+            <TouchableOpacity style={styles.testamentButton} onPress={() => handleSelectTestament('Velho')}>
+              <Text style={styles.testamentEmoji}>📜</Text>
+              <Text style={styles.testamentButtonText}>Antigo{"\n"}Testamento</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.testamentButton} onPress={() => handleSelectTestament('Novo')}>
+              <Text style={styles.testamentEmoji}>✝️</Text>
+              <Text style={styles.testamentButtonText}>Novo{"\n"}Testamento</Text>
+            </TouchableOpacity>
+          </View>
+
+          <Text style={styles.sectionTitle}>Painel de Controle</Text>
+          <View style={styles.actionRow}>
+            <TouchableOpacity style={styles.actionButton} onPress={() => setCurrentScreen('CONFIG')}>
+              <Text style={styles.actionButtonEmoji}>⚙️</Text>
+              <Text style={styles.actionButtonText}>Versões &{"\n"}Ajustes</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.actionButton} onPress={() => setCurrentScreen('PROFILE')}>
+              <Text style={styles.actionButtonEmoji}>👤</Text>
+              <Text style={styles.actionButtonText}>Meu Perfil{"\n"}(Em Breve)</Text>
+            </TouchableOpacity>
+          </View>
+
+          <Text style={styles.footerTip}>
+            💡 Dica: Sua Bíblia padrão "{activeVersion}" funciona 100% offline sem consumir internet!
+          </Text>
+        </ScrollView>
+      )}
+
+      {currentScreen === 'BOOKS' && (
+        <BookSelector
+          testamento={selectedTestament}
+          onBack={() => setCurrentScreen('HOME')}
+          onSelectBook={(bookName) => {
+            setSelectedBook(bookName);
+            setCurrentScreen('CHAPTERS');
+          }}
+        />
+      )}
+
+      {currentScreen === 'CHAPTERS' && (
+        <ChapterSelector
+          livro={selectedBook}
+          onBack={() => setCurrentScreen('BOOKS')}
+          onSelectChapter={(chapterNum) => {
+            setSelectedChapter(chapterNum);
+            setCurrentScreen('READING');
+          }}
+        />
+      )}
+
+      {currentScreen === 'READING' && (
+        <ReadingScreen
+          livro={selectedBook}
+          capitulo={selectedChapter}
+          onBack={() => setCurrentScreen('CHAPTERS')}
+        />
+      )}
+
+      {currentScreen === 'CONFIG' && (
+        <ConfigScreen onBack={() => setCurrentScreen('HOME')} />
+      )}
+
+      {currentScreen === 'PROFILE' && (
+        <View style={styles.fallbackScreen}>
+          <Text style={styles.fallbackTitle}>👤 Meu Perfil</Text>
+          <Text style={styles.fallbackText}>Histórico e conquistas em desenvolvimento.</Text>
+          <TouchableOpacity style={styles.fallbackButton} onPress={() => setCurrentScreen('HOME')}>
+            <Text style={styles.fallbackButtonText}>Voltar para Home</Text>
+          </TouchableOpacity>
         </View>
-      ) : (
-        <>
-          {/* TELA: HOME (Contém seu próprio ScrollView isolado) */}
-          {currentScreen === 'home' && (
-            <ScrollView contentContainerStyle={styles.scrollContent}>
-              <View>
-                <Text style={styles.appTitle}>📖 Bíblia Viva</Text>
-
-                {/* Card de Gamificação */}
-                <View style={styles.gamificationCard}>
-                  <Text style={styles.gamificationTitle}>🏆 Seu Progresso</Text>
-                  <View style={styles.statsRow}>
-                    <Text style={styles.statText}>✨ {userXp} XP</Text>
-                    <Text style={styles.statText}>🔥 {streakDays} Dias Seguidos</Text>
-                  </View>
-                </View>
-
-                {/* Card do Versículo do Dia */}
-                {dailyVerse && (
-                  <View style={styles.dailyVerseCard}>
-                    <Text style={styles.dailyVerseHeader}>🌅 Versículo do Dia</Text>
-                    <Text style={styles.dailyVerseText}>"{dailyVerse.texto}"</Text>
-                    <Text style={styles.dailyVerseReference}>
-                      {dailyVerse.livro} {dailyVerse.capitulo}:{dailyVerse.versiculo} (ARA)
-                    </Text>
-                  </View>
-                )}
-
-                {/* Central de Downloads Offline */}
-                <View style={styles.downloadSection}>
-                  <Text style={styles.downloadSectionTitle}>📥 Versões para Uso Offline</Text>
-                  
-                  {isDownloading && (
-                    <Text style={styles.downloadingProgressText}>Baixando arquivos... {downloadProgress}%</Text>
-                  )}
-
-                  <View style={styles.downloadRow}>
-                    {['ara', 'nvi', 'kji'].map((v) => (
-                      <TouchableOpacity
-                        key={v}
-                        disabled={isDownloading}
-                        style={[
-                          styles.downloadButton,
-                          { backgroundColor: downloadedVersions[v] ? '#27AE60' : '#E2E2E2' }
-                        ]}
-                        onPress={() => handleDownload(v)}
-                      >
-                        <Text style={{ color: downloadedVersions[v] ? '#FFF' : '#333', fontWeight: 'bold', fontSize: 12 }}>
-                          {v.toUpperCase()} {downloadedVersions[v] ? '✓' : '⬇️'}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                </View>
-
-                {/* Navegação por Testamentos */}
-                <Text style={styles.sectionTitle}>Navegar por Testamentos</Text>
-                <View style={styles.buttonRow}>
-                  <TouchableOpacity 
-                    style={styles.categoryButton} 
-                    onPress={() => handleNavigateToTestament('antigo')}
-                  >
-                    <Text style={styles.categoryButtonText}>📜 Antigo Testamento</Text>
-                  </TouchableOpacity>
-                  
-                  <TouchableOpacity 
-                    style={styles.categoryButton} 
-                    onPress={() => handleNavigateToTestament('novo')}
-                  >
-                    <Text style={styles.categoryButtonText}>✝️ Novo Testamento</Text>
-                  </TouchableOpacity>
-                </View>
-
-                <Text style={styles.tipText}>
-                  💡 Dica: Seu progresso e versões baixadas são salvos no seu aparelho!
-                </Text>
-              </View>
-            </ScrollView>
-          )}
-
-          {/* TELA: SELEÇÃO DE LIVROS (Livres do ScrollView externo) */}
-          {currentScreen === 'books' && (
-            <BookSelector 
-              testamento={selectedTestament} 
-              onBack={() => setCurrentScreen('home')}
-              onSelectBook={handleSelectBook}
-            />
-          )}
-
-          {/* TELA: SELEÇÃO DE CAPÍTULOS */}
-          {currentScreen === 'chapters' && (
-            <ChapterSelector 
-              livro={selectedBook}
-              onBack={() => setCurrentScreen('books')}
-              onSelectChapter={handleSelectChapter}
-            />
-          )}
-
-          {/* TELA: LEITURA DOS VERSÍCULOS */}
-          {currentScreen === 'reading' && (
-            <ReadingScreen 
-              livro={selectedBook}
-              capitulo={selectedChapter}
-              versionCode="ara"
-              onBack={() => setCurrentScreen('chapters')}
-              onFinishReading={handleFinishReading}
-            />
-          )}
-        </>
       )}
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F5F5FA',
-  },
-  scrollContent: {
-    padding: 20,
-  },
-  loadingContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 120,
-  },
-  loadingText: {
-    marginTop: 12,
-    color: '#666',
-    fontSize: 16,
-    fontWeight: '500',
-  },
-  appTitle: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#1A1A2E',
-    textAlign: 'center',
-    marginVertical: 20,
-  },
-  gamificationCard: {
-    backgroundColor: '#4E3629',
-    borderRadius: 12,
-    padding: 15,
-    marginBottom: 20,
-    elevation: 3,
-  },
-  gamificationTitle: {
-    color: '#FFF',
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 8,
-  },
-  statsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  statText: {
-    color: '#FFD700',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  dailyVerseCard: {
-    backgroundColor: '#FFF',
-    borderRadius: 12,
-    padding: 20,
-    marginBottom: 25,
-    borderLeftWidth: 5,
-    borderLeftColor: '#4E3629',
-    elevation: 2,
-  },
-  dailyVerseHeader: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#666',
-    marginBottom: 8,
-    textTransform: 'uppercase',
-  },
-  dailyVerseText: {
-    fontSize: 16,
-    fontStyle: 'italic',
-    color: '#333',
-    lineHeight: 24,
-  },
-  dailyVerseReference: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#4E3629',
-    textAlign: 'right',
-    marginTop: 10,
-  },
-  downloadSection: {
-    backgroundColor: '#FFF',
-    padding: 15,
-    borderRadius: 12,
-    marginBottom: 25,
-    borderWidth: 1,
-    borderColor: '#E2E2E2',
-    elevation: 1,
-  },
-  downloadSectionTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#4E3629',
-    marginBottom: 10,
-  },
-  downloadingProgressText: {
-    color: '#2980B9',
-    marginBottom: 10,
-    fontWeight: 'bold',
-  },
-  downloadRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  downloadButton: {
-    padding: 12,
-    borderRadius: 8,
-    flex: 0.31,
-    alignItems: 'center',
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#1A1A2E',
-    marginBottom: 12,
-  },
-  buttonRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 20,
-  },
-  categoryButton: {
-    backgroundColor: '#FFF',
-    flex: 0.48,
-    padding: 15,
-    borderRadius: 10,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#E2E2E2',
-  },
-  categoryButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#4E3629',
-  },
-  tipText: {
-    textAlign: 'center',
-    color: '#888',
-    fontSize: 12,
-    marginTop: 10,
-  }
+  container: { flex: 1, backgroundColor: '#FAFAFA' },
+  scrollContent: { padding: 20, paddingTop: Platform.OS === 'android' ? 45 : 10, paddingBottom: 40 },
+  headerTitleContainer: { alignItems: 'center', marginTop: 10, marginBottom: 20 },
+  mainTitle: { fontSize: 25, fontWeight: 'bold', color: '#1E1E1E' },
+  progressCard: { backgroundColor: '#2A2522', padding: 16, borderRadius: 12, marginBottom: 15, elevation: 2 },
+  progressTitle: { color: '#D4AF37', fontWeight: 'bold', fontSize: 14, marginBottom: 6 },
+  progressRow: { flexDirection: 'row', justifyContent: 'space-between' },
+  progressItem: { color: '#FFF', fontWeight: 'bold', fontSize: 16 },
+  dailyVerseCard: { backgroundColor: '#FFF', padding: 18, borderRadius: 12, marginBottom: 20, elevation: 1, borderWidth: 1, borderColor: '#EAEAEA' },
+  dailyVerseTitle: { color: '#1E1E1E', fontWeight: 'bold', fontSize: 14, marginBottom: 8 },
+  dailyVerseText: { fontSize: 15, color: '#444', lineHeight: 22, fontStyle: 'italic' },
+  dailyVerseReference: { fontSize: 12, color: '#777', fontWeight: 'bold', marginTop: 8, textAlign: 'right' },
+  sectionTitle: { fontSize: 16, fontWeight: 'bold', color: '#333', marginBottom: 12, marginTop: 10 },
+  testamentRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 15 },
+  actionRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20 },
+  testamentButton: { backgroundColor: '#FFF', width: '48%', height: 100, borderRadius: 12, alignItems: 'center', justifyContent: 'center', elevation: 1, borderWidth: 1, borderColor: '#EAEAEA' },
+  testamentEmoji: { fontSize: 24, marginBottom: 4 },
+  testamentButtonText: { fontSize: 14, fontWeight: '600', color: '#333', textAlign: 'center' },
+  actionButton: { backgroundColor: '#FFF', width: '48%', height: 90, borderRadius: 12, alignItems: 'center', justifyContent: 'center', elevation: 1, borderWidth: 1, borderColor: '#EAEAEA' },
+  actionButtonEmoji: { fontSize: 22, marginBottom: 4 },
+  actionButtonText: { fontSize: 13, fontWeight: '600', color: '#333', textAlign: 'center' },
+  footerTip: { textAlign: 'center', fontSize: 12, color: '#999', marginTop: 15, paddingHorizontal: 10, lineHeight: 18 },
+  fallbackScreen: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 30, backgroundColor: '#FAFAFA' },
+  fallbackTitle: { fontSize: 22, fontWeight: 'bold', color: '#1E1E1E', marginBottom: 15 },
+  fallbackText: { fontSize: 15, color: '#666', textAlign: 'center', marginBottom: 30, lineHeight: 22 },
+  fallbackButton: { backgroundColor: '#1E1E1E', paddingHorizontal: 30, paddingVertical: 14, borderRadius: 10 },
+  fallbackButtonText: { color: '#FFF', fontSize: 15, fontWeight: 'bold' }
 });

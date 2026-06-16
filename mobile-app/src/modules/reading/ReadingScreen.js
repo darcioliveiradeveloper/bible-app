@@ -1,19 +1,23 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, View, Text, TouchableOpacity, ScrollView, ActivityIndicator, StatusBar } from 'react-native';
-// Garante o uso do seu serviço offline original do projeto
-import { getLocalVerseOffline } from './offlineService';
+import { getLocalVerseOffline, getActiveVersion } from './offlineService';
 
-export default function ReadingScreen({ onBack, livro, capitulo, versionCode = 'ara' }) {
+export default function ReadingScreen({ onBack, livro, capitulo }) {
   const [verses, setVerses] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [currentVersion, setCurrentVersion] = useState('DEFAULT');
 
   useEffect(() => {
     const loadVerses = async () => {
       setLoading(true);
       try {
-        // Busca os dados diretamente do seu banco offline
-        console.log(`Buscando local: ${versionCode}, ${livro}, Cap ${capitulo}`);
-        const data = await getLocalVerseOffline(versionCode, livro, capitulo);
+        // 1. Identifica qual a versão ativa configurada no aparelho
+        const activeVer = await getActiveVersion();
+        setCurrentVersion(activeVer.toUpperCase());
+
+        // 2. Busca os dados filtrados diretamente do banco offline
+        console.log(`Buscando local da versão ativa [${activeVer}]: ${livro}, Cap ${capitulo}`);
+        const data = await getLocalVerseOffline(activeVer, livro, capitulo);
         
         if (data && data.length > 0) {
           setVerses(data);
@@ -21,14 +25,14 @@ export default function ReadingScreen({ onBack, livro, capitulo, versionCode = '
           setVerses([]);
         }
       } catch (error) {
-        console.log("Erro ao carregar versículos locais:", error);
+        console.log("Erro ao carregar versículos locais na leitura:", error);
       } finally {
         setLoading(false);
       }
     };
     
     loadVerses();
-  }, [livro, capitulo, versionCode]);
+  }, [livro, capitulo]);
 
   return (
     <View style={styles.container}>
@@ -39,7 +43,7 @@ export default function ReadingScreen({ onBack, livro, capitulo, versionCode = '
       {/* Cabeçalho flutuante escuro */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>{livro} · Capítulo {capitulo}</Text>
-        <Text style={styles.headerSubtitle}>Versão: {versionCode.toUpperCase()}</Text>
+        <Text style={styles.headerSubtitle}>Versão em Uso: {currentVersion}</Text>
       </View>
 
       {loading ? (
@@ -51,12 +55,12 @@ export default function ReadingScreen({ onBack, livro, capitulo, versionCode = '
         <ScrollView contentContainerStyle={styles.scrollContent}>
           {verses.length === 0 ? (
             <Text style={styles.emptyText}>
-              Nenhum texto encontrado para este capítulo.{'\n'}
-              Verifique se a versão {versionCode.toUpperCase()} foi baixada.
+              Nenhum texto encontrado para este capítulo.{"\n"}
+              Verifique se o livro foi escrito corretamente no banco ou se a versão {currentVersion} contém esses dados.
             </Text>
           ) : (
             verses.map((item) => (
-              <Text key={item.id || item.versiculo} style={styles.verseText}>
+              <Text key={item.id || `${item.livro}-${item.capitulo}-${item.versiculo}`} style={styles.verseText}>
                 <Text style={styles.verseNumber}>{item.versiculo} </Text>
                 {item.texto}
               </Text>
