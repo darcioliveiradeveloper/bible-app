@@ -1,51 +1,52 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, Text, TouchableOpacity, ScrollView, StatusBar } from 'react-native';
-
-const BIBLE_BOOKS = [
-  { name: 'Gênesis', testament: 'antigo', chapters: 50 },
-  { name: 'Êxodo', testament: 'antigo', chapters: 40 },
-  { name: 'Levítico', testament: 'antigo', chapters: 27 },
-  { name: 'Números', testament: 'antigo', chapters: 36 },
-  { name: 'Deuteronômio', testament: 'antigo', chapters: 34 },
-  { name: 'Mateus', testament: 'novo', chapters: 28 },
-  { name: 'Marcos', testament: 'novo', chapters: 16 },
-  { name: 'Lucas', testament: 'novo', chapters: 24 },
-  { name: 'João', testament: 'novo', chapters: 21 },
-  { name: 'Atos', testament: 'novo', chapters: 28 }
-];
+import { getReadChapters } from './progressService';
+const bibleData = require('../../../assets/bibles/bible-default.json');
 
 export default function ChapterSelector({ livro, onBack, onSelectChapter }) {
-  const bookData = BIBLE_BOOKS.find(b => b.name === livro);
-  // Se for um livro que não mapeamos acima, ele assume 50 por segurança ou usa o valor real
-  const totalChapters = bookData ? bookData.chapters : 50; 
+  const [readChapters, setReadChapters] = useState([]);
 
-  const chapters = Array.from({ length: totalChapters }, (_, i) => i + 1); 
+  useEffect(() => {
+    const loadReadStatus = async () => {
+      const read = await getReadChapters();
+      setReadChapters(read);
+    };
+    loadReadStatus();
+  }, []);
+
+  const bookData = bibleData.books.find(b => b.name === livro);
+  const chapters = Array.from({ length: bookData ? bookData.chapters.length : 0 }, (_, i) => i + 1);
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#F5F5FA" />
+      <StatusBar barStyle="light-content" backgroundColor="#000" />
       
+      {/* Cabeçalho centralizado seguindo o estilo validado */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Capítulos de {livro}</Text>
+        <Text style={styles.headerTitle}>Livro de {livro}</Text>
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.grid}>
-          {chapters.map((cap) => (
-            <TouchableOpacity 
-              key={cap} 
-              style={styles.chapterBox} 
-              onPress={() => onSelectChapter(cap)}
-            >
-              <Text style={styles.chapterText}>{cap}</Text>
-            </TouchableOpacity>
-          ))}
+          {chapters.map((cap) => {
+            const isRead = readChapters.includes(`${livro}-${cap}`);
+            return (
+              <TouchableOpacity 
+                key={cap} 
+                style={[styles.chapterBox, isRead && styles.chapterRead]} 
+                onPress={() => onSelectChapter(cap)}
+              >
+                <Text style={styles.chapterText}>{cap}</Text>
+              </TouchableOpacity>
+            );
+          })}
         </View>
       </ScrollView>
 
+      {/* Botão de rodapé ajustado com paddingBottom: 45 */}
       <View style={styles.bottomBar}>
         <TouchableOpacity style={styles.backButton} onPress={onBack}>
-          <Text style={styles.backButtonText}>← Voltar para Livros</Text>
+          <Text style={styles.buttonText}>Voltar para livros</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -55,35 +56,25 @@ export default function ChapterSelector({ livro, onBack, onSelectChapter }) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F5F5FA' },
   header: { 
-    paddingTop: 60, 
-    paddingBottom: 15, 
-    paddingHorizontal: 20,
+    backgroundColor: '#000', 
+    paddingTop: 45, 
+    paddingBottom: 20, 
     alignItems: 'center', 
-    backgroundColor: '#F5F5FA',
+    justifyContent: 'center' 
   },
-  headerTitle: { fontSize: 20, fontWeight: 'bold', color: '#1A1A2E' },
-  scrollContent: { padding: 20, paddingBottom: 140 },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'flex-start' },
-  chapterBox: {
-    backgroundColor: '#FFF', width: '21%', aspectRatio: 1, 
-    justifyContent: 'center', alignItems: 'center', marginBottom: 12, marginRight: '4%',
-    borderRadius: 8, borderWidth: 1, borderColor: '#E2E2E2', elevation: 1
+  headerTitle: { fontSize: 22, fontWeight: 'bold', color: '#FFF' },
+  scrollContent: { padding: 20, paddingBottom: 120 },
+  grid: { flexDirection: 'row', flexWrap: 'wrap' },
+  chapterBox: { backgroundColor: '#FFF', width: '21%', aspectRatio: 1, justifyContent: 'center', alignItems: 'center', margin: '2%', borderRadius: 8, borderWidth: 1, borderColor: '#E2E2E2' },
+  chapterRead: { backgroundColor: '#28a745', borderColor: '#1e7e34' },
+  chapterText: { fontWeight: 'bold' },
+  bottomBar: { 
+    position: 'absolute', bottom: 0, left: 0, right: 0, 
+    paddingHorizontal: 20, 
+    paddingTop: 15,
+    paddingBottom: 45, // Ajustado conforme sua validação anterior
+    backgroundColor: '#F5F5FA' 
   },
-  chapterText: { fontSize: 16, fontWeight: 'bold', color: '#1E1E1E' }, 
-  bottomBar: {
-    position: 'absolute', bottom: 0, left: 0, right: 0,
-    backgroundColor: '#F5F5FA', 
-    paddingTop: 10,
-    paddingBottom: 45, // Subiu mais para dar o espaçamento correto
-    paddingHorizontal: 20,
-  },
-  backButton: { 
-    backgroundColor: '#1E1E1E', 
-    height: 50, 
-    borderRadius: 10, 
-    alignItems: 'center',
-    justifyContent: 'center',
-    elevation: 4
-  }, 
-  backButtonText: { color: '#FFF', fontSize: 15, fontWeight: 'bold' },
+  backButton: { backgroundColor: '#1E1E1E', height: 50, borderRadius: 25, alignItems: 'center', justifyContent: 'center' },
+  buttonText: { color: '#FFF', fontWeight: 'bold', fontSize: 16 }
 });

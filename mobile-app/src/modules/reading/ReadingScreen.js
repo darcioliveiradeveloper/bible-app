@@ -1,78 +1,88 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, ScrollView, ActivityIndicator, StatusBar } from 'react-native';
+import { StyleSheet, View, Text, TouchableOpacity, ScrollView, Alert, StatusBar } from 'react-native';
 import { getLocalVerseOffline, getActiveVersion } from './offlineService';
+import { markChapterAsRead } from './progressService';
 
-export default function ReadingScreen({ onBack, livro, capitulo }) {
+export default function ReadingScreen({ onBack, onNext, livro, capitulo }) {
   const [verses, setVerses] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [currentVersion, setCurrentVersion] = useState('DEFAULT');
+  const [version, setVersion] = useState('');
+  const [isSaved, setIsSaved] = useState(false);
+  const [showSaveButton, setShowSaveButton] = useState(false);
 
   useEffect(() => {
-    const loadVerses = async () => {
+    const loadData = async () => {
       setLoading(true);
-      try {
-        // 1. Identifica qual a versão ativa configurada no aparelho
-        const activeVer = await getActiveVersion();
-        setCurrentVersion(activeVer.toUpperCase());
-
-        // 2. Busca os dados filtrados diretamente do banco offline
-        console.log(`Buscando local da versão ativa [${activeVer}]: ${livro}, Cap ${capitulo}`);
-        const data = await getLocalVerseOffline(activeVer, livro, capitulo);
-        
-        if (data && data.length > 0) {
-          setVerses(data);
-        } else {
-          setVerses([]);
-        }
-      } catch (error) {
-        console.log("Erro ao carregar versículos locais na leitura:", error);
-      } finally {
-        setLoading(false);
-      }
+      const activeVer = await getActiveVersion();
+      setVersion(activeVer.toUpperCase());
+      const data = await getLocalVerseOffline(activeVer, livro, capitulo);
+      setVerses(data || []);
+      setLoading(false);
     };
-    
-    loadVerses();
+    loadData();
   }, [livro, capitulo]);
+
+  const handleSave = async () => {
+    const result = await markChapterAsRead(livro, capitulo);
+    if (result.success || result.message === "Já lido") {
+      setIsSaved(true);
+    }
+  };
+
+  const handleNavigation = (action) => {
+    if (!isSaved) {
+      Alert.alert("Atenção", "Salve o progresso para não perder seu XP!", [
+        { text: "Continuar lendo" },
+        { text: "Sair sem salvar", onPress: action }
+      ]);
+    } else {
+      action();
+    }
+  };
 
   return (
     <View style={styles.container}>
-      {/* Controla a barra superior para não cobrir o relógio */}
-      <StatusBar barStyle="dark-content" backgroundColor="#FAFAFA" />
-      <View style={styles.statusBarSpacer} />
-
-      {/* Cabeçalho flutuante escuro */}
+      <StatusBar barStyle="light-content" backgroundColor="#000" />
+      
+      {/* Cabeçalho Preto validado */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>{livro} · Capítulo {capitulo}</Text>
-        <Text style={styles.headerSubtitle}>Versão em Uso: {currentVersion}</Text>
+        <Text style={styles.bookTitle}>{livro}</Text>
+        <Text style={styles.chapterSubtitle}>Cap. {capitulo} - {version}</Text>
       </View>
 
-      {loading ? (
-        <View style={styles.center}>
-          <ActivityIndicator size="large" color="#1E1E1E" />
-          <Text style={styles.loadingText}>Carregando versículos...</Text>
-        </View>
-      ) : (
-        <ScrollView contentContainerStyle={styles.scrollContent}>
-          {verses.length === 0 ? (
-            <Text style={styles.emptyText}>
-              Nenhum texto encontrado para este capítulo.{"\n"}
-              Verifique se o livro foi escrito corretamente no banco ou se a versão {currentVersion} contém esses dados.
-            </Text>
-          ) : (
-            verses.map((item) => (
-              <Text key={item.id || `${item.livro}-${item.capitulo}-${item.versiculo}`} style={styles.verseText}>
-                <Text style={styles.verseNumber}>{item.versiculo} </Text>
-                {item.texto}
-              </Text>
-            ))
-          )}
-        </ScrollView>
-      )}
+      <ScrollView 
+        contentContainerStyle={styles.scrollContent}
+        onScroll={({ nativeEvent }) => {
+          const isBottom = nativeEvent.layoutMeasurement.height + nativeEvent.contentOffset.y >= nativeEvent.contentSize.height - 20;
+          if (isBottom) setShowSaveButton(true);
+        }}
+        scrollEventThrottle={16}
+      >
+        {verses.map((item) => (
+          <Text key={item.id} style={styles.verseText}>
+            <Text style={styles.verseNumber}>{item.versiculo} </Text>{item.texto}
+          </Text>
+        ))}
+      </ScrollView>
 
-      {/* Rodapé alto e seguro contra botões nativos */}
+      {/* Barra inferior com paddingBottom: 45 conforme validado */}
       <View style={styles.bottomBar}>
-        <TouchableOpacity style={styles.backButton} onPress={onBack}>
-          <Text style={styles.backButtonText}>← Voltar para Capítulos</Text>
+        <TouchableOpacity style={styles.navButton} onPress={() => handleNavigation(onBack)}>
+          <Text style={styles.buttonText}>← Voltar</Text>
+        </TouchableOpacity>
+
+        {showSaveButton && (
+          <TouchableOpacity 
+            style={[styles.saveButton, isSaved && styles.savedButton]} 
+            onPress={handleSave}
+            disabled={isSaved}
+          >
+            <Text style={styles.buttonText}>{isSaved ? "Salvo" : "Salvar"}</Text>
+          </TouchableOpacity>
+        )}
+
+        <TouchableOpacity style={styles.navButton} onPress={() => handleNavigation(onNext)}>
+          <Text style={styles.buttonText}>Próximo →</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -80,39 +90,28 @@ export default function ReadingScreen({ onBack, livro, capitulo }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FAFAFA' },
-  statusBarSpacer: { height: 50, backgroundColor: '#FAFAFA' }, 
-  header: {
-    backgroundColor: '#1E1E1E',
-    paddingVertical: 18,
-    paddingHorizontal: 20,
-    marginHorizontal: 15,
-    borderRadius: 12,
-    alignItems: 'center',
-    elevation: 2
+  container: { flex: 1, backgroundColor: '#F5F5FA' },
+  header: { 
+    backgroundColor: '#000', 
+    paddingTop: 35, 
+    paddingBottom: 10, 
+    alignItems: 'center' 
   },
-  headerTitle: { color: '#FFF', fontSize: 19, fontWeight: 'bold' },
-  headerSubtitle: { color: '#BBB', fontSize: 12, marginTop: 4 },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  loadingText: { marginTop: 10, color: '#666' },
-  scrollContent: { padding: 20, paddingBottom: 140 },
-  verseText: { fontSize: 18, lineHeight: 28, color: '#222', marginBottom: 15, textAlign: 'justify' },
-  verseNumber: { fontWeight: 'bold', color: '#1E1E1E', fontSize: 13 }, 
-  emptyText: { textAlign: 'center', color: '#666', marginTop: 40, lineHeight: 22 },
-  bottomBar: {
-    position: 'absolute', bottom: 0, left: 0, right: 0,
-    backgroundColor: '#FAFAFA', 
-    paddingTop: 10,
-    paddingBottom: 45, 
-    paddingHorizontal: 20,
+  bookTitle: { fontSize: 22, fontWeight: 'bold', color: '#FFF' },
+  chapterSubtitle: { fontSize: 13, color: '#AAA', marginTop: 2 },
+  scrollContent: { padding: 20, paddingBottom: 150 },
+  verseText: { fontSize: 18, marginBottom: 15, color: '#333' },
+  verseNumber: { fontWeight: 'bold', color: '#000' },
+  bottomBar: { 
+    position: 'absolute', bottom: 0, left: 0, right: 0, 
+    flexDirection: 'row', justifyContent: 'space-around',
+    paddingHorizontal: 15,
+    paddingTop: 15,
+    paddingBottom: 45, // Valor validado por você
+    backgroundColor: '#F5F5FA'
   },
-  backButton: { 
-    backgroundColor: '#1E1E1E', 
-    height: 50, 
-    borderRadius: 10, 
-    alignItems: 'center',
-    justifyContent: 'center',
-    elevation: 4
-  },
-  backButtonText: { color: '#FFF', fontSize: 15, fontWeight: 'bold' },
+  navButton: { backgroundColor: '#1E1E1E', height: 45, width: '28%', borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
+  saveButton: { backgroundColor: '#1E1E1E', height: 45, width: '28%', borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
+  savedButton: { backgroundColor: '#28a745' },
+  buttonText: { color: '#FFF', fontWeight: 'bold', fontSize: 13 }
 });

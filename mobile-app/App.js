@@ -90,7 +90,7 @@ export default function App() {
 
           <Text style={styles.sectionTitle}>Navegar por Testamentos</Text>
           <View style={styles.testamentRow}>
-            <TouchableOpacity style={styles.testamentButton} onPress={() => handleSelectTestament('Velho')}>
+            <TouchableOpacity style={styles.testamentButton} onPress={() => handleSelectTestament('Antigo')}>
               <Text style={styles.testamentEmoji}>📜</Text>
               <Text style={styles.testamentButtonText}>Antigo{"\n"}Testamento</Text>
             </TouchableOpacity>
