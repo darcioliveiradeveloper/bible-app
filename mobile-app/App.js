@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, Text, TouchableOpacity, ScrollView, StatusBar, BackHandler } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, SafeAreaProvider } from 'react-native-safe-area-context';
 
 import BibleScreen from './src/modules/reading/BibleScreen';
-import BookListScreen from './src/modules/reading/BookListScreen';
 import BookSelector from './src/modules/reading/BookSelector';
 import ChapterSelector from './src/modules/reading/ChapterSelector';
 import ReadingScreen from './src/modules/reading/ReadingScreen';
@@ -17,7 +16,7 @@ export default function App() {
   const [navigationStack, setNavigationStack] = useState(['HOME']);
   const [selectedBook, setSelectedBook] = useState(null);
   const [selectedChapter, setSelectedChapter] = useState(null);
-  const [selectedTestament, setSelectedTestament] = useState(null); // Estado para o filtro de livros
+  const [selectedTestament, setSelectedTestament] = useState(null);
 
   const [xp, setXp] = useState(0);
   const [streak, setStreak] = useState(1);
@@ -57,100 +56,99 @@ export default function App() {
   const currentScreen = navigationStack[navigationStack.length - 1];
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FAFAFA" translucent={true} />
+    <SafeAreaProvider>
+      <SafeAreaView style={styles.container}>
+        <StatusBar barStyle="dark-content" backgroundColor="#FAFAFA" translucent={true} />
 
-      {currentScreen === 'HOME' && (
-        <ScrollView contentContainerStyle={styles.scrollContent}>
-          <Text style={styles.mainTitle}>📖 Bíblia Viva</Text>
-          <View style={styles.progressCard}>
-            <Text style={styles.progressTitle}>🏆 Seu Progresso</Text>
-            <View style={styles.progressRow}>
-              <Text style={styles.progressItem}>✨ {xp} XP</Text>
-              <Text style={styles.progressItem}>🔥 {streak} Dias Seguidos</Text>
+        {currentScreen === 'HOME' && (
+          <ScrollView contentContainerStyle={styles.scrollContent}>
+            <Text style={styles.mainTitle}>📖 Bíblia Viva</Text>
+            <View style={styles.progressCard}>
+              <Text style={styles.progressTitle}>🏆 Seu Progresso</Text>
+              <View style={styles.progressRow}>
+                <Text style={styles.progressItem}>✨ {xp} XP</Text>
+                <Text style={styles.progressItem}>🔥 {streak} Dias Seguidos</Text>
+              </View>
             </View>
-          </View>
-          {dailyVerse && (
-            <View style={styles.dailyVerseCard}>
-              <Text style={styles.dailyVerseTitle}>💡 Versículo do Dia</Text>
-              <Text style={styles.dailyVerseText}>"{dailyVerse.texto}"</Text>
-            </View>
-          )}
+            {dailyVerse && (
+              <View style={styles.dailyVerseCard}>
+                <Text style={styles.dailyVerseTitle}>💡 Versículo do Dia</Text>
+                <Text style={styles.dailyVerseText}>"{dailyVerse.texto}"</Text>
+              </View>
+            )}
 
-          <View style={styles.gridContainer}>
-            <View style={styles.navRow}>
-              <TouchableOpacity style={styles.navBox} onPress={() => navigateTo('BIBLE_MAIN')}>
-                <Text style={styles.navEmoji}>📖</Text>
-                <Text style={styles.navText}>Bíblia</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.navBox} onPress={() => {}}>
-                <Text style={styles.navEmoji}>🌿</Text>
-                <Text style={styles.navText}>Planos</Text>
-              </TouchableOpacity>
+            <View style={styles.gridContainer}>
+              <View style={styles.navRow}>
+                <TouchableOpacity style={styles.navBox} onPress={() => navigateTo('BIBLE_MAIN')}>
+                  <Text style={styles.navEmoji}>📖</Text>
+                  <Text style={styles.navText}>Bíblia</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.navBox} onPress={() => {}}>
+                  <Text style={styles.navEmoji}>🌿</Text>
+                  <Text style={styles.navText}>Planos</Text>
+                </TouchableOpacity>
+              </View>
+              <View style={styles.navRow}>
+                <TouchableOpacity style={styles.navBox} onPress={() => {}}>
+                  <Text style={styles.navEmoji}>🎮</Text>
+                  <Text style={styles.navText}>Jogos</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.navBox} onPress={() => {}}>
+                  <Text style={styles.navEmoji}>💬</Text>
+                  <Text style={styles.navText}>Versículo do Dia</Text>
+                </TouchableOpacity>
+              </View>
+              <View style={styles.navRow}>
+                <TouchableOpacity style={styles.navBox} onPress={() => navigateTo('CONFIG')}>
+                  <Text style={styles.navEmoji}>⚙️</Text>
+                  <Text style={styles.navText}>Ajustes</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.navBox} onPress={() => navigateTo('PROFILE')}>
+                  <Text style={styles.navEmoji}>👤</Text>
+                  <Text style={styles.navText}>Perfil</Text>
+                </TouchableOpacity>
+              </View>
             </View>
-            <View style={styles.navRow}>
-              <TouchableOpacity style={styles.navBox} onPress={() => {}}>
-                <Text style={styles.navEmoji}>🎮</Text>
-                <Text style={styles.navText}>Jogos</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.navBox} onPress={() => {}}>
-                <Text style={styles.navEmoji}>💬</Text>
-                <Text style={styles.navText}>Versículo do Dia</Text>
-              </TouchableOpacity>
-            </View>
-            <View style={styles.navRow}>
-              <TouchableOpacity style={styles.navBox} onPress={() => navigateTo('CONFIG')}>
-                <Text style={styles.navEmoji}>⚙️</Text>
-                <Text style={styles.navText}>Ajustes</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.navBox} onPress={() => navigateTo('PROFILE')}>
-                <Text style={styles.navEmoji}>👤</Text>
-                <Text style={styles.navText}>Perfil</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </ScrollView>
-      )}
+          </ScrollView>
+        )}
 
-      {currentScreen === 'BIBLE_MAIN' && <BibleScreen onBack={navigateBack} onNavigate={navigateTo} />}
-      
-      {/* Integração completa aqui */}
-      {currentScreen === 'BOOK_LIST' && (
-        <BookListScreen 
-          onBack={navigateBack} 
-          onNavigateToBooks={(testamento) => {
-            setSelectedTestament(testamento);
-            navigateTo('BOOKS');
-          }} 
-        />
-      )}
-      
-      {currentScreen === 'BOOKS' && (
-        <BookSelector 
-          testamento={selectedTestament} 
-          onBack={navigateBack} 
-          onSelectBook={(b) => { setSelectedBook(b); navigateTo('CHAPTERS'); }} 
-        />
-      )}
-      
-      {currentScreen === 'CHAPTERS' && (
-        <ChapterSelector 
-          livro={selectedBook} 
-          onBack={navigateBack} 
-          onSelectChapter={(c) => { setSelectedChapter(c); navigateTo('READING'); }} 
-        />
-      )}
-      
-      {currentScreen === 'READING' && (
-        <ReadingScreen 
-          livro={selectedBook} 
-          capitulo={selectedChapter} 
-          onBack={navigateBack} 
-        />
-      )}
-      
-      {currentScreen === 'CONFIG' && <ConfigScreen onBack={navigateBack} />}
-    </SafeAreaView>
+        {currentScreen === 'BIBLE_MAIN' && (
+          <BibleScreen 
+            onBack={navigateBack} 
+            onNavigateToBooks={(testamento) => {
+              setSelectedTestament(testamento);
+              navigateTo('BOOKS');
+            }}
+          />
+        )}
+        
+        {currentScreen === 'BOOKS' && (
+          <BookSelector 
+            testamento={selectedTestament} 
+            onBack={navigateBack} 
+            onSelectBook={(b) => { setSelectedBook(b); navigateTo('CHAPTERS'); }} 
+          />
+        )}
+        
+        {currentScreen === 'CHAPTERS' && (
+          <ChapterSelector 
+            livro={selectedBook} 
+            onBack={navigateBack} 
+            onSelectChapter={(c) => { setSelectedChapter(c); navigateTo('READING'); }} 
+          />
+        )}
+        
+        {currentScreen === 'READING' && (
+          <ReadingScreen 
+            livro={selectedBook} 
+            capitulo={selectedChapter} 
+            onBack={navigateBack} 
+          />
+        )}
+        
+        {currentScreen === 'CONFIG' && <ConfigScreen onBack={navigateBack} />}
+      </SafeAreaView>
+    </SafeAreaProvider>
   );
 }
 

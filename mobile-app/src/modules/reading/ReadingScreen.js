@@ -1,32 +1,27 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, ScrollView, Alert, StatusBar } from 'react-native';
+import { StyleSheet, View, Text, TouchableOpacity, ScrollView, Alert, StatusBar, Platform } from 'react-native';
 import { getLocalVerseOffline, getActiveVersion } from './offlineService';
 import { markChapterAsRead } from './progressService';
 
 export default function ReadingScreen({ onBack, onNext, livro, capitulo }) {
   const [verses, setVerses] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [version, setVersion] = useState('');
   const [isSaved, setIsSaved] = useState(false);
   const [showSaveButton, setShowSaveButton] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
-      setLoading(true);
       const activeVer = await getActiveVersion();
       setVersion(activeVer.toUpperCase());
       const data = await getLocalVerseOffline(activeVer, livro, capitulo);
       setVerses(data || []);
-      setLoading(false);
     };
     loadData();
   }, [livro, capitulo]);
 
   const handleSave = async () => {
     const result = await markChapterAsRead(livro, capitulo);
-    if (result.success || result.message === "Já lido") {
-      setIsSaved(true);
-    }
+    if (result.success || result.message === "Já lido") setIsSaved(true);
   };
 
   const handleNavigation = (action) => {
@@ -42,12 +37,13 @@ export default function ReadingScreen({ onBack, onNext, livro, capitulo }) {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#000" />
+      {/* StatusBar configurada para transparente ou preta */}
+      <StatusBar barStyle="light-content" backgroundColor="#000000" translucent={false} />
       
-      {/* Cabeçalho Preto validado */}
-      <View style={styles.header}>
-        <Text style={styles.bookTitle}>{livro}</Text>
-        <Text style={styles.chapterSubtitle}>Cap. {capitulo} - {version}</Text>
+      {/* Cabeçalho limpo */}
+      <View style={styles.headerBlack}>
+        <Text style={styles.headerTitle}>{livro}</Text>
+        <Text style={styles.headerSubtitle}>Cap. {capitulo} - {version}</Text>
       </View>
 
       <ScrollView 
@@ -65,24 +61,20 @@ export default function ReadingScreen({ onBack, onNext, livro, capitulo }) {
         ))}
       </ScrollView>
 
-      {/* Barra inferior com paddingBottom: 45 conforme validado */}
-      <View style={styles.bottomBar}>
-        <TouchableOpacity style={styles.navButton} onPress={() => handleNavigation(onBack)}>
-          <Text style={styles.buttonText}>← Voltar</Text>
+      {/* Rodapé mantido original */}
+      <View style={styles.footerFixed}>
+        <TouchableOpacity style={styles.footerButton} onPress={() => handleNavigation(onBack)}>
+          <Text style={styles.footerButtonText}>← Voltar</Text>
         </TouchableOpacity>
-
+        
         {showSaveButton && (
-          <TouchableOpacity 
-            style={[styles.saveButton, isSaved && styles.savedButton]} 
-            onPress={handleSave}
-            disabled={isSaved}
-          >
-            <Text style={styles.buttonText}>{isSaved ? "Salvo" : "Salvar"}</Text>
+          <TouchableOpacity style={[styles.footerButton, isSaved && styles.savedButton]} onPress={handleSave} disabled={isSaved}>
+            <Text style={styles.footerButtonText}>{isSaved ? "Salvo" : "Salvar"}</Text>
           </TouchableOpacity>
         )}
 
-        <TouchableOpacity style={styles.navButton} onPress={() => handleNavigation(onNext)}>
-          <Text style={styles.buttonText}>Próximo →</Text>
+        <TouchableOpacity style={styles.footerButton} onPress={() => handleNavigation(onNext)}>
+          <Text style={styles.footerButtonText}>Próximo →</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -90,28 +82,21 @@ export default function ReadingScreen({ onBack, onNext, livro, capitulo }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F5F5FA' },
-  header: { 
-    backgroundColor: '#000', 
-    paddingTop: 35, 
-    paddingBottom: 10, 
-    alignItems: 'center' 
+  container: { flex: 1, backgroundColor: '#FFFFFF' },
+  headerBlack: { 
+    backgroundColor: '#000000', 
+    paddingVertical: 15, 
+    alignItems: 'center', 
+    justifyContent: 'center',
+    // Removemos qualquer marginTop ou paddingTop fixo que estava cortando o topo
   },
-  bookTitle: { fontSize: 22, fontWeight: 'bold', color: '#FFF' },
-  chapterSubtitle: { fontSize: 13, color: '#AAA', marginTop: 2 },
-  scrollContent: { padding: 20, paddingBottom: 150 },
+  headerTitle: { color: '#FFFFFF', fontSize: 20, fontWeight: 'bold' },
+  headerSubtitle: { color: '#CCCCCC', fontSize: 13, marginTop: 2 },
+  scrollContent: { padding: 20, paddingBottom: 120 },
   verseText: { fontSize: 18, marginBottom: 15, color: '#333' },
   verseNumber: { fontWeight: 'bold', color: '#000' },
-  bottomBar: { 
-    position: 'absolute', bottom: 0, left: 0, right: 0, 
-    flexDirection: 'row', justifyContent: 'space-around',
-    paddingHorizontal: 15,
-    paddingTop: 15,
-    paddingBottom: 45, // Valor validado por você
-    backgroundColor: '#F5F5FA'
-  },
-  navButton: { backgroundColor: '#1E1E1E', height: 45, width: '28%', borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
-  saveButton: { backgroundColor: '#1E1E1E', height: 45, width: '28%', borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
-  savedButton: { backgroundColor: '#28a745' },
-  buttonText: { color: '#FFF', fontWeight: 'bold', fontSize: 13 }
+  footerFixed: { position: 'absolute', bottom: 0, left: 10, right: 10, flexDirection: 'row', justifyContent: 'space-between', backgroundColor: '#FFFFFF', paddingBottom: 0 },
+  footerButton: { backgroundColor: '#000000', padding: 10, borderRadius: 12, alignItems: 'center', flex: 1, marginHorizontal: 5 },
+  footerButtonText: { color: '#FFFFFF', fontSize: 14, fontWeight: 'bold' },
+  savedButton: { backgroundColor: '#28a745' }
 });

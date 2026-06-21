@@ -1,50 +1,65 @@
 import React from 'react';
 import { StyleSheet, View, Text, TouchableOpacity, ScrollView } from 'react-native';
 
-export default function BibleScreen({ onBack, onNavigate }) {
+export default function BibleScreen({ onBack, onNavigateToBooks }) {
   const menuItems = [
-    { title: 'Livros', icon: '📖', screen: 'BOOK_LIST' },
-    { title: 'Progresso de Leitura', icon: '📊', screen: null },
-    { title: 'Plano de Leitura', icon: '📅', screen: null },
-    { title: 'Pesquisar na Bíblia', icon: '🔍', screen: null },
-    { title: 'Favoritos', icon: '🔖', screen: null },
-    { title: 'Comentários', icon: '💬', screen: null },
-    { title: 'Temas', icon: '☰', screen: null },
+    { title: 'Progresso de Leitura', icon: '📊' },
+    { title: 'Plano de Leitura', icon: '📅' },
+    { title: 'Pesquisar na Bíblia', icon: '🔍' },
+    { title: 'Favoritos', icon: '🔖' },
+    { title: 'Comentários', icon: '💬' },
+    { title: 'Temas', icon: '☰' },
   ];
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={onBack}>
-          <Text style={styles.headerIcon}>←</Text>
-        </TouchableOpacity>
+      <View style={styles.headerBlack}>
         <Text style={styles.headerTitle}>Bíblia</Text>
-        <Text style={styles.headerRight}>ⓘ 💎</Text>
       </View>
+
       <ScrollView contentContainerStyle={styles.grid}>
+        <View style={styles.testamentRow}>
+          <TouchableOpacity style={styles.testamentCard} onPress={() => onNavigateToBooks('Antigo')}>
+            <Text style={styles.cardIcon}>📜</Text>
+            <Text style={styles.cardText}>Antigo Testamento</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.testamentCard} onPress={() => onNavigateToBooks('Novo')}>
+            <Text style={styles.cardIcon}>📖</Text>
+            <Text style={styles.cardText}>Novo Testamento</Text>
+          </TouchableOpacity>
+        </View>
+
         {menuItems.map((item, index) => (
-          <TouchableOpacity 
-            key={index} 
-            style={styles.card} 
-            onPress={() => item.screen && onNavigate(item.screen)}
-          >
+          <TouchableOpacity key={index} style={styles.card}>
             <Text style={styles.cardIcon}>{item.icon}</Text>
             <Text style={styles.cardText}>{item.title}</Text>
           </TouchableOpacity>
         ))}
       </ScrollView>
+
+      <View style={styles.footerFixed}>
+        <TouchableOpacity style={styles.footerButton} onPress={onBack}>
+          <Text style={styles.footerButtonText}>← Voltar</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#1A1A1A' },
-  header: { flexDirection: 'row', alignItems: 'center', padding: 20, paddingTop: 50, justifyContent: 'space-between' },
-  headerTitle: { color: '#FFF', fontSize: 20, fontWeight: 'bold' },
-  headerIcon: { color: '#FFF', fontSize: 24 },
-  headerRight: { color: '#FFF', fontSize: 18 },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', padding: 10, justifyContent: 'space-between' },
-  card: { backgroundColor: '#262626', width: '47%', padding: 20, margin: 5, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  container: { flex: 1, backgroundColor: '#FFFFFF' },
+  headerBlack: { backgroundColor: '#000000', paddingVertical: 20, alignItems: 'center', justifyContent: 'center' },
+  headerTitle: { color: '#FFFFFF', fontSize: 20, fontWeight: 'bold' },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', padding: 10, justifyContent: 'space-between', paddingBottom: 120 },
+  testamentRow: { flexDirection: 'row', width: '100%', justifyContent: 'space-between', marginBottom: 5 },
+  testamentCard: { backgroundColor: '#F0F0F0', width: '48%', padding: 20, margin: 5, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  card: { backgroundColor: '#F0F0F0', width: '47%', padding: 20, margin: 5, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   cardIcon: { fontSize: 32, marginBottom: 10 },
-  cardText: { color: '#FFF', fontSize: 14, fontWeight: '600', textAlign: 'center' }
+  cardText: { color: '#000', fontSize: 14, fontWeight: '600', textAlign: 'center' },
+  // Botão posicionado mais abaixo com bottom: 0 para evitar sobreposição com o conteúdo
+  footerFixed: { position: 'absolute', bottom: 0, left: 20, right: 20 },
+  footerButton: { backgroundColor: '#000000', padding: 15, borderRadius: 12, alignItems: 'center' },
+  footerButtonText: { color: '#FFFFFF', fontSize: 16, fontWeight: 'bold' }
 });
+
+// Arquivo: BibleScreen.js | Data: 21/06/2026 | Hora: 02:12
