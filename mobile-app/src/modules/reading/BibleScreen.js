@@ -1,7 +1,21 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { StyleSheet, View, Text, TouchableOpacity, ScrollView } from 'react-native';
+import ProgressScreen from './ProgressScreen';
 
 export default function BibleScreen({ onBack, onNavigateToBooks }) {
+  const [showProgress, setShowProgress] = useState(false);
+
+  if (showProgress) {
+    return (
+      <ProgressScreen 
+        onBack={() => setShowProgress(false)} 
+        onNavigateToChapterSelector={(bookName) => {
+          onNavigateToBooks(bookName);
+        }}
+      />
+    );
+  }
+
   const menuItems = [
     { title: 'Progresso de Leitura', icon: '📊' },
     { title: 'Plano de Leitura', icon: '📅' },
@@ -30,7 +44,11 @@ export default function BibleScreen({ onBack, onNavigateToBooks }) {
         </View>
 
         {menuItems.map((item, index) => (
-          <TouchableOpacity key={index} style={styles.card}>
+          <TouchableOpacity 
+            key={index} 
+            style={styles.card} 
+            onPress={() => item.title === 'Progresso de Leitura' ? setShowProgress(true) : null}
+          >
             <Text style={styles.cardIcon}>{item.icon}</Text>
             <Text style={styles.cardText}>{item.title}</Text>
           </TouchableOpacity>
@@ -48,18 +66,15 @@ export default function BibleScreen({ onBack, onNavigateToBooks }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#FFFFFF' },
-  headerBlack: { backgroundColor: '#000000', paddingVertical: 20, alignItems: 'center', justifyContent: 'center' },
+  headerBlack: { backgroundColor: '#000000', paddingVertical: 15, alignItems: 'center', justifyContent: 'center' },
   headerTitle: { color: '#FFFFFF', fontSize: 20, fontWeight: 'bold' },
   grid: { flexDirection: 'row', flexWrap: 'wrap', padding: 10, justifyContent: 'space-between', paddingBottom: 120 },
   testamentRow: { flexDirection: 'row', width: '100%', justifyContent: 'space-between', marginBottom: 5 },
   testamentCard: { backgroundColor: '#F0F0F0', width: '48%', padding: 20, margin: 5, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   card: { backgroundColor: '#F0F0F0', width: '47%', padding: 20, margin: 5, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   cardIcon: { fontSize: 32, marginBottom: 10 },
-  cardText: { color: '#000', fontSize: 14, fontWeight: '600', textAlign: 'center' },
-  // Botão posicionado mais abaixo com bottom: 0 para evitar sobreposição com o conteúdo
+  cardText: { color: '#000', fontSize: 16, fontWeight: '600', textAlign: 'center' },
   footerFixed: { position: 'absolute', bottom: 0, left: 20, right: 20 },
   footerButton: { backgroundColor: '#000000', padding: 15, borderRadius: 12, alignItems: 'center' },
-  footerButtonText: { color: '#FFFFFF', fontSize: 16, fontWeight: 'bold' }
+  footerButtonText: { color: '#FFFFFF', fontSize: 20, fontWeight: 'bold' }
 });
-
-// Arquivo: BibleScreen.js | Data: 21/06/2026 | Hora: 02:12

@@ -51,7 +51,7 @@ export default function ChapterSelector({ livro, onBack, onSelectChapter }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#FFFFFF' },
-  headerBlack: { backgroundColor: '#000000', paddingVertical: 20, alignItems: 'center', justifyContent: 'center' },
+  headerBlack: { backgroundColor: '#000000', paddingVertical: 15, alignItems: 'center', justifyContent: 'center' },
   headerTitle: { color: '#FFFFFF', fontSize: 20, fontWeight: 'bold' },
   listContent: { paddingBottom: 120 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', padding: 5 },
@@ -60,7 +60,7 @@ const styles = StyleSheet.create({
   chapterText: { color: '#000', fontSize: 16, fontWeight: '600' },
   footerFixed: { position: 'absolute', bottom: 0, left: 20, right: 20, backgroundColor: '#FFFFFF', paddingBottom: 0 },
   footerButton: { backgroundColor: '#000000', padding: 15, borderRadius: 12, alignItems: 'center' },
-  footerButtonText: { color: '#FFFFFF', fontSize: 16, fontWeight: 'bold' }
+  footerButtonText: { color: '#FFFFFF', fontSize: 20, fontWeight: 'bold' }
 });
 
-// Arquivo: ChapterSelector.js | Data: 21/06/2026 | Hora: 03:10
+// Arquivo: ChapterSelector.js | Data: 22/06/2026 | Hora: 23:00
