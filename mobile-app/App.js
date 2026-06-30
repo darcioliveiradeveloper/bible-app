@@ -7,6 +7,8 @@ import BookSelector from './src/modules/reading/BookSelector';
 import ChapterSelector from './src/modules/reading/ChapterSelector';
 import ReadingScreen from './src/modules/reading/ReadingScreen';
 import ConfigScreen from './src/modules/reading/ConfigScreen';
+import ProgressScreen from './src/modules/reading/ProgressScreen';
+import ProgressMessageScreen from './src/modules/reading/ProgressMessageScreen';
 
 import { getDailyVerse } from './src/modules/dailyVerse/dailyVerseService';
 import { loadProgress } from './src/modules/reading/progressService';
@@ -83,9 +85,9 @@ export default function App() {
                   <Text style={styles.navEmoji}>📖</Text>
                   <Text style={styles.navText}>Bíblia</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.navBox} onPress={() => {}}>
-                  <Text style={styles.navEmoji}>🌿</Text>
-                  <Text style={styles.navText}>Planos</Text>
+                <TouchableOpacity style={styles.navBox} onPress={() => navigateTo('PROGRESS')}>
+                  <Text style={styles.navEmoji}>📊</Text>
+                  <Text style={styles.navText}>Progresso</Text>
                 </TouchableOpacity>
               </View>
               <View style={styles.navRow}>
@@ -147,6 +149,28 @@ export default function App() {
         )}
         
         {currentScreen === 'CONFIG' && <ConfigScreen onBack={navigateBack} />}
+
+        {currentScreen === 'PROGRESS' && (
+          <ProgressScreen 
+            onBack={navigateBack} 
+            onNavigateToChapterSelector={(bookName) => {
+              setSelectedBook(bookName);
+              navigateTo('PROGRESS_MESSAGE');
+            }}
+          />
+        )}
+
+        {currentScreen === 'PROGRESS_MESSAGE' && (
+          <ProgressMessageScreen 
+            livro={selectedBook} 
+            onBack={navigateBack}
+            onComplete={() => navigateTo('CHAPTERS')}
+            onReset={() => {
+              // aqui você pode zerar o progresso do livro antes de seguir
+              navigateTo('CHAPTERS');
+            }}
+          />
+        )}
       </SafeAreaView>
     </SafeAreaProvider>
   );

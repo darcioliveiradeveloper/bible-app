@@ -49,4 +49,4 @@ const styles = StyleSheet.create({
 });
 
 
-// Arquivo: BookSelector.js | Data: 22/06/2026 | Hora: 23:00
+// Arquivo: BookSelector.js | Data: 25/06/2026 | Hora: 22:10

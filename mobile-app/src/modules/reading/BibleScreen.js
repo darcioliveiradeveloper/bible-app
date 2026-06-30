@@ -10,6 +10,8 @@ export default function BibleScreen({ onBack, onNavigateToBooks }) {
       <ProgressScreen 
         onBack={() => setShowProgress(false)} 
         onNavigateToChapterSelector={(bookName) => {
+          setShowProgress(false);
+          // Abre direto a tela de capítulos do livro escolhido
           onNavigateToBooks(bookName);
         }}
       />
@@ -47,7 +49,11 @@ export default function BibleScreen({ onBack, onNavigateToBooks }) {
           <TouchableOpacity 
             key={index} 
             style={styles.card} 
-            onPress={() => item.title === 'Progresso de Leitura' ? setShowProgress(true) : null}
+            onPress={() => {
+              if (item.title === 'Progresso de Leitura') {
+                setShowProgress(true);
+              }
+            }}
           >
             <Text style={styles.cardIcon}>{item.icon}</Text>
             <Text style={styles.cardText}>{item.title}</Text>
