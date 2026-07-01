@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, Text, TouchableOpacity, ScrollView } from 'react-native';
-import { fetchBooks, fetchBooksByCategory } from './bibleApiService';
+import { fetchBooks, fetchBooksByCategory } from './BibleApiService';
 
 export default function BookSelector({ testamento, categoria, onBack, onSelectBook }) {
   const [books, setBooks] = useState([]);

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, Text, TouchableOpacity, ScrollView } from 'react-native';
-import { getReadChapters } from './progressService';
+import { getReadChapters } from './ProgressService';
 const bibleData = require('../../../assets/bibles/bible-default.json');
 
 export default function ChapterSelector({ livro, onBack, onSelectChapter }) {

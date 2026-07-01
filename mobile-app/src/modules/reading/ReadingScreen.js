@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, View, Text, TouchableOpacity, ScrollView, Alert, StatusBar, Platform } from 'react-native';
-import { getLocalVerseOffline, getActiveVersion } from './offlineService';
-import { markChapterAsRead } from './progressService';
+import { getLocalVerseOffline, getActiveVersion } from './OfflineService';
+import { markChapterAsRead } from './ProgressService';
 
 export default function ReadingScreen({ onBack, onNext, livro, capitulo }) {
   const [verses, setVerses] = useState([]);

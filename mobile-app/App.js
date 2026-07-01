@@ -1,18 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, ScrollView, StatusBar, BackHandler } from 'react-native';
-import { SafeAreaView, SafeAreaProvider } from 'react-native-safe-area-context';
+import { BackHandler } from 'react-native';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
+// Importações das Telas (Componentes)
+import HomeScreen from './src/modules/reading/HomeScreen';
 import BibleScreen from './src/modules/reading/BibleScreen';
 import BookSelector from './src/modules/reading/BookSelector';
 import ChapterSelector from './src/modules/reading/ChapterSelector';
 import ReadingScreen from './src/modules/reading/ReadingScreen';
 import ConfigScreen from './src/modules/reading/ConfigScreen';
 import ProgressScreen from './src/modules/reading/ProgressScreen';
+import ProfileScreen from './src/modules/reading/ProfileScreen';
 import ProgressMessageScreen from './src/modules/reading/ProgressMessageScreen';
+import Header from './src/components/Header';
+import Footer from './src/components/Footer';
 
-import { getDailyVerse } from './src/modules/dailyVerse/dailyVerseService';
-import { loadProgress } from './src/modules/reading/progressService';
-import { getActiveVersion } from './src/modules/reading/offlineService';
 
 export default function App() {
   const [navigationStack, setNavigationStack] = useState(['HOME']);
@@ -20,14 +22,8 @@ export default function App() {
   const [selectedChapter, setSelectedChapter] = useState(null);
   const [selectedTestament, setSelectedTestament] = useState(null);
 
-  const [xp, setXp] = useState(0);
-  const [streak, setStreak] = useState(1);
-  const [dailyVerse, setDailyVerse] = useState(null);
-  const [activeVersion, setActiveVersion] = useState('KJV');
-
-  const navigateTo = (screen) => {
-    setNavigationStack([...navigationStack, screen]);
-  };
+  // Lógica de Navegação Centralizada
+  const navigateTo = (screen) => setNavigationStack([...navigationStack, screen]);
 
   const navigateBack = () => {
     if (navigationStack.length > 1) {
@@ -44,85 +40,28 @@ export default function App() {
     return () => backHandler.remove();
   }, [navigationStack]);
 
-  useEffect(() => {
-    const initApp = async () => {
-      const progress = await loadProgress();
-      if (progress) { setXp(progress.xp || 0); setStreak(progress.streak || 1); }
-      const version = await getActiveVersion();
-      setActiveVersion(version === 'default' || version === 'kjv' ? 'KJV' : version.toUpperCase());
-      setDailyVerse(getDailyVerse(version));
-    };
-    if (navigationStack[navigationStack.length - 1] === 'HOME') initApp();
-  }, [navigationStack]);
-
   const currentScreen = navigationStack[navigationStack.length - 1];
 
   return (
     <SafeAreaProvider>
-      <SafeAreaView style={styles.container}>
-        <StatusBar barStyle="dark-content" backgroundColor="#FAFAFA" translucent={true} />
+      <SafeAreaView style={{ flex: 1 }}>
+        <Header title="Minha Bíblia" />
+        {/* Roteamento de Telas */}
 
-        {currentScreen === 'HOME' && (
-          <ScrollView contentContainerStyle={styles.scrollContent}>
-            <Text style={styles.mainTitle}>📖 Bíblia Viva</Text>
-            <View style={styles.progressCard}>
-              <Text style={styles.progressTitle}>🏆 Seu Progresso</Text>
-              <View style={styles.progressRow}>
-                <Text style={styles.progressItem}>✨ {xp} XP</Text>
-                <Text style={styles.progressItem}>🔥 {streak} Dias Seguidos</Text>
-              </View>
-            </View>
-            {dailyVerse && (
-              <View style={styles.dailyVerseCard}>
-                <Text style={styles.dailyVerseTitle}>💡 Versículo do Dia</Text>
-                <Text style={styles.dailyVerseText}>"{dailyVerse.texto}"</Text>
-              </View>
-            )}
-
-            <View style={styles.gridContainer}>
-              <View style={styles.navRow}>
-                <TouchableOpacity style={styles.navBox} onPress={() => navigateTo('BIBLE_MAIN')}>
-                  <Text style={styles.navEmoji}>📖</Text>
-                  <Text style={styles.navText}>Bíblia</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.navBox} onPress={() => navigateTo('PROGRESS')}>
-                  <Text style={styles.navEmoji}>📊</Text>
-                  <Text style={styles.navText}>Progresso</Text>
-                </TouchableOpacity>
-              </View>
-              <View style={styles.navRow}>
-                <TouchableOpacity style={styles.navBox} onPress={() => {}}>
-                  <Text style={styles.navEmoji}>🎮</Text>
-                  <Text style={styles.navText}>Jogos</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.navBox} onPress={() => {}}>
-                  <Text style={styles.navEmoji}>💬</Text>
-                  <Text style={styles.navText}>Versículo do Dia</Text>
-                </TouchableOpacity>
-              </View>
-              <View style={styles.navRow}>
-                <TouchableOpacity style={styles.navBox} onPress={() => navigateTo('CONFIG')}>
-                  <Text style={styles.navEmoji}>⚙️</Text>
-                  <Text style={styles.navText}>Ajustes</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.navBox} onPress={() => navigateTo('PROFILE')}>
-                  <Text style={styles.navEmoji}>👤</Text>
-                  <Text style={styles.navText}>Perfil</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </ScrollView>
-        )}
+        {currentScreen === 'HOME' && 
+          <HomeScreen 
+            onNavigate={navigateTo} />}
 
         {currentScreen === 'BIBLE_MAIN' && (
           <BibleScreen 
             onBack={navigateBack} 
-            onNavigateToBooks={(testamento) => {
-              setSelectedTestament(testamento);
-              navigateTo('BOOKS');
-            }}
-          />
-        )}
+            onNavigateToProgress={() => navigateTo('PROGRESS')}
+            onNavigateToBooks={(testamento) => { 
+            setSelectedTestament(testamento); 
+            navigateTo('BOOKS'); 
+        }} 
+      />
+  )}
         
         {currentScreen === 'BOOKS' && (
           <BookSelector 
@@ -147,49 +86,36 @@ export default function App() {
             onBack={navigateBack} 
           />
         )}
-        
+
+       {currentScreen === 'PROGRESS' && (
+        <ProgressScreen 
+          onBack={navigateBack} 
+          onNavigateToChapterSelector={(bookName) => {
+          setSelectedBook(bookName);
+          navigateTo('PROGRESS_MESSAGE');
+        }}
+      />
+      )}
+
+{currentScreen === 'PROGRESS_MESSAGE' && (
+  <ProgressMessageScreen 
+    livro={selectedBook}
+    onComplete={() => {
+      const stack = navigationStack.slice(0, -1);
+      setNavigationStack([...stack, 'CHAPTERS']);
+    }}
+    onReset={() => {
+      const stack = navigationStack.slice(0, -1);
+      setNavigationStack([...stack, 'CHAPTERS']);
+    }}
+    onCancel={() => navigateBack()}
+  />
+  )}
+
         {currentScreen === 'CONFIG' && <ConfigScreen onBack={navigateBack} />}
+        {currentScreen === 'PROFILE' && <ProfileScreen onBack={navigateBack} />}
 
-        {currentScreen === 'PROGRESS' && (
-          <ProgressScreen 
-            onBack={navigateBack} 
-            onNavigateToChapterSelector={(bookName) => {
-              setSelectedBook(bookName);
-              navigateTo('PROGRESS_MESSAGE');
-            }}
-          />
-        )}
-
-        {currentScreen === 'PROGRESS_MESSAGE' && (
-          <ProgressMessageScreen 
-            livro={selectedBook} 
-            onBack={navigateBack}
-            onComplete={() => navigateTo('CHAPTERS')}
-            onReset={() => {
-              // aqui você pode zerar o progresso do livro antes de seguir
-              navigateTo('CHAPTERS');
-            }}
-          />
-        )}
       </SafeAreaView>
     </SafeAreaProvider>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FAFAFA' },
-  scrollContent: { padding: 20 },
-  mainTitle: { fontSize: 25, fontWeight: 'bold', color: '#1E1E1E', textAlign: 'center', marginVertical: 20 },
-  progressCard: { backgroundColor: '#2A2522', padding: 16, borderRadius: 12, marginBottom: 15 },
-  progressTitle: { color: '#D4AF37', fontWeight: 'bold', fontSize: 14, marginBottom: 6 },
-  progressRow: { flexDirection: 'row', justifyContent: 'space-between' },
-  progressItem: { color: '#FFF', fontWeight: 'bold', fontSize: 16 },
-  dailyVerseCard: { backgroundColor: '#FFF', padding: 18, borderRadius: 12, marginBottom: 20, borderWidth: 1, borderColor: '#EEE' },
-  dailyVerseTitle: { fontWeight: 'bold', marginBottom: 8 },
-  dailyVerseText: { fontSize: 15, color: '#444', fontStyle: 'italic' },
-  gridContainer: { marginTop: 10 },
-  navRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 15 },
-  navBox: { backgroundColor: '#FFF', width: '48%', padding: 15, borderRadius: 12, alignItems: 'center', borderWidth: 1, borderColor: '#EEE' },
-  navEmoji: { fontSize: 24, marginBottom: 5 },
-  navText: { fontSize: 13, fontWeight: '600' }
-});

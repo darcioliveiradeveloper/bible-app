@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, Text, TouchableOpacity, ScrollView, ActivityIndicator, Alert, StatusBar } from 'react-native';
-import { getActiveVersion, setActiveVersion, getDownloadedVersions, downloadBibleVersion } from './offlineService';
+import { getActiveVersion, setActiveVersion, getDownloadedVersions, downloadBibleVersion } from './OfflineService';
 
 export default function ConfigScreen({ onBack }) {
   const [activeVersion, setActiveVersionState] = useState('DEFAULT');
